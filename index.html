@@ -35,6 +35,16 @@
 				float:right;
 				padding: 4px 8px 0 0;
 			}
+			#minimap {
+				position: absolute;
+				top: 32px;
+				right: 8px;
+				width: 220px;
+				height: 220px;
+				background-color: rgba(5, 5, 5, 0.6);
+				border: 1px solid #333;
+				z-index: 10;
+			}
 		</style>
 	</head>
 	<body>
@@ -51,11 +61,13 @@
 			</div>
 		</div>
 		<div id="container"></div>
+		<canvas id="minimap" width="220" height="220"></canvas>
 
 		<script src="three.js"></script>
 		<script src="first-person-controls.js"></script>
 		<script src="js-struct.js"></script>
 		<script src="HermiteCurve3.js"></script>
+		<script src="minimap.js"></script>
 		<script src="wipeout.js?v2"></script>
 
 		<script>

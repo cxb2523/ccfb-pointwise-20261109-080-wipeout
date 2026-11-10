@@ -10,6 +10,10 @@ var Wipeout = function(containerId, width, height){
 
 	this.activeCameraMode = 'fly';
 
+	// HUD minimap (optional - only if the page provides the canvas)
+	var minimapCanvas = document.getElementById('minimap');
+	this.minimap = minimapCanvas ? new Minimap(minimapCanvas) : null;
+
 	window.addEventListener('resize', this.resize.bind(this), true);
 	this.clear();
 	this.animate();
@@ -43,6 +47,14 @@ Wipeout.prototype.clear = function() {
 	
 	this.startTime = Date.now();
 	this.ticks = 0;
+
+	// Minimap tracking state
+	this.prevCameraPos = null;
+	this.prevCameraTime = 0;
+	this.cameraVelocity = {x: 0, z: 0};
+	if( this.minimap ) {
+		this.minimap.reset();
+	}
 };
 
 Wipeout.prototype.resize = function() {
@@ -82,6 +94,21 @@ Wipeout.prototype.animate = function() {
 		
 		this.rotateSpritesToCamera(this.splineCamera);
 		this.renderer.render(this.scene, this.splineCamera);
+
+		// Update the minimap from the spline camera's motion
+		if( this.minimap ) {
+			var camPos = this.splineCamera.position;
+			if( this.prevCameraPos ) {
+				var dt = Math.max((time - this.prevCameraTime) / 1000, 0.0001);
+				this.cameraVelocity.x = (camPos.x - this.prevCameraPos.x) / dt;
+				this.cameraVelocity.z = (camPos.z - this.prevCameraPos.z) / dt;
+			}
+			this.prevCameraPos = {x: camPos.x, z: camPos.z};
+			this.prevCameraTime = time;
+
+			this.minimap.update(camPos, this.cameraVelocity);
+			this.minimap.render();
+		}
 	}
 
 	// Default Orbit camera
@@ -982,6 +1009,11 @@ Wipeout.prototype.createCameraSpline = function(buffer, faces, vertices) {
 	}
 	
 	this.cameraSpline = new THREE.HermiteCurve3(cameraPoints, 0.5, 0.0);
+
+	// Feed the finished spline to the minimap (rebuilds its sample cache)
+	if( this.minimap ) {
+		this.minimap.setTrack(this.cameraSpline);
+	}
 	
 	// Increase arc length subdivisions to get constant camera speed during jumps.
 	// This prevent camera going too fast due imprecise length distance estimations.
